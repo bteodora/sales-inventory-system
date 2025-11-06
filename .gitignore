@@ -1,0 +1,60 @@
+# Mendix deployment i build folderi
+/deployment/
+/modeler/deployment/
+/javasource/deployment/
+
+/.mendix/
+
+/.mpr.bak
+*.mpr.bak
+
+# Mendix cache (od verzije 9.18+)
+*.mendix-cache/
+/.src/mendixs-cache/
+
+# Java build output
+/javasource/*.class
+/javasource/.classpath
+/javasource/.project
+/javasource/.settings/
+/javasource/bin/
+/javasource/userlib/*.jar
+!javasource/userlib/*.jar  # ostavi ako ti trebaju custom jarovi
+
+# Web build output
+/theme/.sass-cache/
+/theme/.cache/
+/theme-cache/
+/theme/styles/css/
+/theme/styles/sass/.sass-cache/
+/theme/styles/sass/.cache/
+/theme/styles/sass/.map
+
+# Logs i temp fajlovi
+*.log
+*.tmp
+
+# IDE/OS fajlovi
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+/*.launch
+/packages/
+/releases/
+/.mendix-cache/
+/.classpath
+/.project
+/poslovna_informatika.mpr.bak
+/poslovna_informatika.mpr.lock
+/modeler-merge-marker
+/project-settings.user.json
+/javasource/*/proxies/
+/javasource/system/
+/**/node_modules/
+!/javascriptsource/**/node_modules/
+/nativemobile/builds/
+/vendorlib/temp/
+/.svn/
+/mprcontents/mprjournal*
