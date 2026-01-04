@@ -149,3 +149,6 @@ The system provides deep insights into inventory health and financial standing.
 *   **Database:** Relational SQL Schema (3NF)
 *   **Logic:** Event-driven Microflows for reservation handling.
 *   **Reporting:** OQL (Object Query Language) for complex datasets.
+
+## Compliance Note
+> *The system is designed to uphold ACID (Atomicity, Consistency, Isolation, Durability) properties. Critical financial data is protected against partial updates, ensuring the ledger is always balanced.*
