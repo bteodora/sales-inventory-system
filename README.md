@@ -1,112 +1,151 @@
 <div align="center">
-  <img src="Logo_poslovna.png" alt="Business Informatics ERP Logo" width="300"/>
+  <img src="Logo_poslovna.png" alt="Business Informatics ERP Logo" width="280"/>
   
   <br><br>
 
-  <h1>Enterprise Resource Planning (ERP): Sales & Inventory Subsystems</h1>
+  <h1>Enterprise Resource Planning (ERP): Sales & Supply Chain Engine</h1>
   <h3>Integrated Business Process Management Solution</h3>
 
   <p>
-    <img src="https://img.shields.io/badge/Platform-Mendix_Studio_Pro-2565e8?style=for-the-badge&logo=mendix&logoColor=white" alt="Mendix"/>
-    <img src="https://img.shields.io/badge/Architecture-Model--Driven-purple?style=for-the-badge" alt="Model Driven"/>
-    <img src="https://img.shields.io/badge/Domain-Supply_Chain_Management-success?style=for-the-badge" alt="SCM"/>
-    <img src="https://img.shields.io/badge/Type-Enterprise_Application-gray?style=for-the-badge" alt="Enterprise"/>
+    <a href="#">
+      <img src="https://img.shields.io/badge/Architecture-Modular_Monolith-blueviolet?style=for-the-badge&logo=structure" alt="Architecture"/>
+    </a>
+    <a href="#">
+      <img src="https://img.shields.io/badge/Data_Integrity-ACID_Compliant-success?style=for-the-badge&logo=postgresql&logoColor=white" alt="Data Integrity"/>
+    </a>
+    <a href="#">
+      <img src="https://img.shields.io/badge/Domain-FinTech_%26_Logistics-0052CC?style=for-the-badge" alt="Domain"/>
+    </a>
   </p>
 
   <p>
-    <strong>A comprehensive, monolithic information system designed to digitize and automate the Order-to-Cash (O2C) and Procure-to-Pay (P2P) lifecycles.</strong>
+    <strong>A robust enterprise system connecting Order-to-Cash (O2C) and Procure-to-Pay (P2P) workflows.</strong>
+    <br>
+    Engineered to handle complex document lifecycles, temporal pricing logic, and strictly consistent inventory auditing.
   </p>
 </div>
 
 ---
 
-## Executive Summary
+## System Overview
 
-This project represents a fully functional **ERP module** developed within the **Mendix Low-Code Platform**. It bridges the gap between commercial sales operations and physical inventory management, ensuring strict data consistency and real-time synchronization between departments.
+This application serves as the central nervous system for a trading enterprise. It bridges the gap between the **Sales Department** (Commercial) and the **Warehouse** (Logistics), ensuring that financial documents perfectly match physical inventory reality.
 
-The system is engineered to handle complex business logic, including **temporal pricing models**, **VAT (Value Added Tax) compliance**, **inventory reservation protocols**, and the lifecycle management of transactional documents (Invoices, Delivery Notes, Goods Receipts).
-
----
-
-## System Architecture & Domain Model
-
-The solution is built upon a relational domain model that enforces referential integrity across two primary subsystems.
-
-### 1. Sales Subsystem (Commercial Logic)
-Designed for the **Sales Representative** persona, this module handles the commercial aspect of the business, focusing on financial accuracy and document generation.
-
-*   **Order Management:**
-    *   Digital ingestion of **Customer Orders** (Narudžbenica).
-    *   Automated workflow triggers to validate customer credit standing and stock availability.
-*   **Dynamic Invoicing Engine:**
-    *   **Workflow:** Supports generation of Invoices directly from Orders or as standalone documents (Direct Entry).
-    *   **Temporal Pricing Logic:** The system implements a sophisticated pricing engine that resolves item costs and VAT rates based on the *transaction date*, cross-referencing valid Price Lists (Cenovnik) active at that specific moment in time.
-    *   **Financial Calculation:** Real-time computation of net amounts, tax bases, and gross totals at both the *line-item level* and *document header level*.
-*   **Regulatory Compliance:**
-    *   Automatic generation of the **Sales Invoice Journal (KIF - Knjiga izlaznih faktura)** for specific fiscal periods.
-    *   Adherence to official document formatting standards for external communication.
-
-### 2. Warehouse Management Subsystem (WMS)
-Designed for **Inventory Managers**, this module governs the physical flow of goods, ensuring that system data mirrors physical reality.
-
-*   **Document Lifecycle Management:**
-    *   Full support for **Goods Receipt Notes (Primka)**, **Delivery Notes (Otpremnica)**, and **Inter-Warehouse Transfers (Međumagacinski promet)**.
-    *   **State Management:** Documents proceed through strict states: *Draft* $\rightarrow$ *Posted (Knjiženo)* $\rightarrow$ *Reversed (Stornirano)*. Posting a document triggers immutable inventory ledger updates.
-*   **Inventory Initialization:**
-    *   Procedures for opening **Initial Stock (Početno Stanje)** at the beginning of fiscal years.
-*   **Advanced Reporting:**
-    *   **Stock List (Lager Lista):** Real-time aggregation of quantities and financial values per warehouse.
-    *   **Stock Card Analytics (Magacinska Kartica):** Detailed chronological history of all movements (in/out) for specific SKUs, providing full traceability.
+The core engineering challenge was to implement strict **Business Rules** that prevent data inconsistency during concurrent user operations (e.g., creating invoices while stock is moving).
 
 ---
 
-## Key Technical Features & Business Logic
+## Domain Model & Database Schema
 
-The core value of this project lies in the complex Microflow logic implemented to ensure business rules are never violated.
+The system relies on a **Highly Normalized Relational Model**. The architecture explicitly defines relationships between Articles, Warehouses, and their dynamic states via Stock Cards.
 
-### Cross-Module Integration: The Reservation Protocol
-A critical engineering challenge in ERP systems is preventing "overselling" (selling items that physically exist but are promised to another customer).
+```mermaid
+erDiagram
+    WAREHOUSE ||--|{ STOCK_CARD : maintains
+    ARTICLE ||--|{ STOCK_CARD : tracked_by
+    STOCK_CARD ||--|{ TRANSACTION_ITEM : records_movement
+    TRANSACTION_DOC ||--|{ TRANSACTION_ITEM : contains
+    TRANSACTION_DOC }|--|| WAREHOUSE : originates_from
+    CUSTOMER ||--|{ ORDER : places
+    ORDER ||--o| INVOICE : generates
 
-1.  **Stock Availability Check:**
-    *   When a Sales Representative adds an item to an Invoice, a Microflow triggers a synchronous check against the WMS module.
-    *   The system queries the specific **Stock Card** for the requested SKU.
-2.  **The "Reserved Quantity" Attribute:**
-    *   The Domain Model includes a dedicated `ReservedQuantity` attribute on the Stock Entity.
-    *   **Logic:** $AvailableStock = PhysicalStock - ReservedQuantity$.
-    *   If the requested amount exceeds $AvailableStock$, the transaction is blocked, and a warning is issued to the user.
-3.  **Transactional Commit:**
-    *   Upon finalizing an invoice, the system automatically increments the `ReservedQuantity`.
-    *   Only when the **Delivery Note (Otpremnica)** is generated and posted does the system decrement the physical stock and clear the reservation.
-
-### Automated Document Transformation
-To reduce human error, the system implements **Document Conversion Workflows**:
-*   **Invoice $\rightarrow$ Delivery Note:** The system can auto-generate a Delivery Note based on the contents of a finalized Invoice, inheriting all line items, customer data, and reference numbers, ensuring a perfect match between financial and logistical records.
+    ARTICLE {
+        string SKU
+        string Name
+        string UnitOfMeasure
+    }
+    STOCK_CARD {
+        decimal Quantity_Physical
+        decimal Quantity_Reserved
+        decimal Total_Value
+        decimal Average_Price
+    }
+    TRANSACTION_DOC {
+        string DocNumber
+        date Date
+        enum Type "Receipt | Delivery | Transfer"
+        enum Status "Draft | Posted | Reversed"
+    }
+```
 
 ---
 
-## Business Intelligence & Reporting
+## Module 1: Sales Subsystem (Commercial)
 
-The application utilizes document generation templates to produce legally binding documents and analytical reports.
+Designed for the **Sales Representative** persona, this module handles the commercial lifecycle with a focus on flexibility and financial accuracy.
 
-| Report Type | Description | Target Audience |
+### 🔹 Workflow Flexibility
+*   **Order-to-Invoice:** Sales Reps can input a **Customer Order (Narudžbenica)**. Upon approval, the system can auto-generate a generic **Invoice** inheriting all line items.
+*   **Direct Invoicing:** Supports ad-hoc sales where no prior order exists (Direct Entry).
+
+### 🔹 Financial Computation Engine
+*   **Temporal Pricing Logic:** The system manages **Price Lists (Cenovnici)**. When creating an invoice, the engine resolves the Item Price and VAT Rate based on the **Invoice Date** (not necessarily the current date), ensuring historical accuracy.
+*   **Granular Calculation:**
+    *   Calculates VAT (PDV) and Base Amount per **Line Item**.
+    *   Aggregates totals at the **Document Header** level.
+
+### 🔹 Output & Reporting
+*   **Customer Invoice:** Generates a professional PDF with all line items for external distribution.
+*   **Sales Ledger (KIF - Knjiga izlaznih faktura):** A mandatory fiscal report aggregating all issued invoices within a user-defined date range.
+
+---
+
+## Module 2: Warehouse Management (WMS)
+
+Designed for the **Warehouse Manager**, acting as the "Source of Truth" for physical goods.
+
+### 🔹 Transaction Management
+The system supports full lifecycle management for three distinct document types:
+1.  **Goods Receipt (Primka):** Increases stock value/quantity.
+2.  **Delivery Note (Otpremnica):** Decreases stock value/quantity.
+3.  **Inter-Warehouse Transfer (Međumagacinski promet):** Atomically moves stock between locations (Credit Origin / Debit Destination).
+
+### 🔹 Lifecycle & State Machine
+*   **Draft:** Editable state. No impact on the ledger.
+*   **Posted (Knjižen):** Finalized state. Updates the **Stock Card** permanently.
+*   **Reversed (Stornirano):** Corrective mechanism. Instead of deleting records (which destroys audit trails), the system creates a "Storno" effect to nullify the financial impact while keeping the history.
+
+### 🔹 Initialization
+*   **Opening Balance (Početno Stanje):** Specialized functionality to initialize Stock Cards at the beginning of a fiscal year.
+
+---
+
+## Module 3: Cross-Module Integration (The "Glue")
+
+This is the most technically complex part of the system, ensuring synchronization between Sales and Warehouse.
+
+### The Reservation Protocol (Crucial Logic)
+To prevent "Overselling," the system enforces strict checks during the Invoice creation process:
+
+1.  **Real-Time Availability Check:**
+    *   When a Sales Rep enters an item, the system queries the specific **Stock Card** (Article + Warehouse combo).
+    *   *Logic:* If `Requested > (Physical - Reserved)`, the system **warns the user** and blocks the line item.
+
+2.  **Dynamic Reservation Updates (CUD Hooks):**
+    *   The attribute `ReservedQuantity` on the Stock Card is automatically updated via event listeners on:
+        *   **Create:** Adding an item increments reservation.
+        *   **Update:** Changing quantity adjusts the reservation delta.
+        *   **Delete:** Removing an item releases the reservation.
+
+3.  **Automated Document Chaining:**
+    *   Once an Invoice is finalized, the system can automatically generate a corresponding **Delivery Note (Otpremnica)**, carrying over all data to the warehouse team.
+
+---
+
+## Analytics & Reporting Intelligence
+
+The system provides deep insights into inventory health and financial standing.
+
+| Report Type | Description | Technical Implementation |
 | :--- | :--- | :--- |
-| **Commercial Invoice** | A formal, legally compliant PDF document detailing line items, tax calculations, and payment terms. | Customers |
-| **Sales Journal (KIF)** | An aggregated chronological registry of all issued invoices within a date range, used for VAT reporting. | Accounting / Tax Auth. |
-| **Inventory Stock List** | A snapshot of current inventory levels and total valuation across all warehouses. | Warehouse Manager |
-| **Stock Card History** | An audit trail report showing every single movement (Debit/Credit) for a specific product. | Auditors / Logistics |
+| **Stock List (Lager Lista)** | Shows current Quantity and Total Value for all items in a warehouse. | Aggregates data from active Stock Cards. |
+| **Stock Card Analytics (Magacinska Kartica)** | A detailed chronological ledger of every movement. | Reconstructs history: *Opening + Inputs - Outputs = Balance*. |
 
 ---
 
 ## Tech Stack
 
-*   **Development Platform:** Mendix Studio Pro (Low-Code/RAD)
-*   **Database:** HSQLDB (Local) / PostgreSQL (Production capable)
-*   **Frontend:** Atlas UI (Responsive Web Framework)
-*   **Logic Layer:** Mendix Microflows & Nanoflows (Visual Logic)
-*   **Query Language:** OQL (Object Query Language) for complex reporting datasets.
-
----
-
-## Compliance Note
-
-> *All generated documents follow the official regulatory forms required by local business laws. The system enforces strict ACID properties on transaction posting to ensure financial data integrity.*
+*   **Platform:** Mendix Studio Pro (Model-Driven Engineering)
+*   **Database:** Relational SQL Schema (3NF)
+*   **Logic:** Event-driven Microflows for reservation handling.
+*   **Reporting:** OQL (Object Query Language) for complex datasets.
