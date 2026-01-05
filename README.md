@@ -1,7 +1,6 @@
 <div align="center">
   <img src="Logo_poslovna.png" alt="Business Informatics ERP Logo" width="280"/>
-  
-  <br><br>
+
 
   <h1>Enterprise Resource Planning (ERP): Sales & Supply Chain Engine</h1>
   <h3>Integrated Business Process Management Solution</h3>
